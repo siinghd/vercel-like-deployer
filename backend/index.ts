@@ -42,6 +42,12 @@ const shouldDestroy = (message: string): boolean => {
     'critical',
   ].some((keyword) => lowerCaseMessage.includes(keyword.toLowerCase()));
 };
+const findContainerByName = async (containerName: string) => {
+  const containers = await docker.listContainers({ all: true });
+  return containers.find((container) =>
+    container.Names.some((name) => name === `/${containerName}`)
+  );
+};
 const destroyContainer = async (
   slug: string
 ): Promise<[boolean, string] | undefined> => {
@@ -131,9 +137,13 @@ const deployApplication = async (
   let startLogging = false;
   try {
     const existingContainerId = await redisClient.get(`container:${slug}`);
-    if (existingContainerId) {
+    const existingContainerByName = await findContainerByName(slug);
+
+    if (existingContainerByName && existingContainerByName.Id) {
       try {
-        const existingContainer = docker.getContainer(existingContainerId);
+        const existingContainer = docker.getContainer(
+          existingContainerByName.Id
+        );
         await existingContainer.stop();
         await existingContainer.remove();
         await redisClient.del(`container:${slug}`);
