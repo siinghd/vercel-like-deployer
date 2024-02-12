@@ -62,6 +62,7 @@ const destroyContainer = async (
     await container.stop();
     await container.remove();
     await redisClient.del(`container:${slug}`);
+    await redisClient.del(`port:${slug}`);
     return [true, `Container for ${slug} has been destroyed.`];
   } catch (error) {
     return [false, `Error destroying container for ${slug}: ${error}`];
