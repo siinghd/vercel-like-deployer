@@ -3,10 +3,10 @@ name: Build and Deploy FRONTEND
 env:
   PROJECT_NAME: deployer
   PROJECT_TYPE: frontend
-  WORKING_DIRECTORY: frontend
-  CURR_WORKING_DIRECTORY: ./frontend
+  WORKING_DIRECTORY: vercel-frontend
+  CURR_WORKING_DIRECTORY: ./vercel-frontend
   DEV_APP_PORT: 3014
-  DEV_DOMAIN_NAME: deployerhsingh.site
+  DEV_DOMAIN_NAME: deployer.hsingh.site
   PROD_APP_PORT:
   PROD_DOMAIN_NAME:
   ENABLE_CACHE: false
