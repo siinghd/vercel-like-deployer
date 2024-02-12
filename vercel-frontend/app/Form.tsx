@@ -30,20 +30,25 @@ export default function Form() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formdata = new FormData(e.currentTarget);
-
-    console.log(formdata.get('githubUrl'));
+;
     const githubUrl = formdata.get('githubUrl') as string;
     const envFile = formdata.get('envFile') as string;
+    const installCmd = formdata.get('installCmd') as string;
+    const buildCmd = formdata.get('buildCmd') as string;
+    const runCmd = formdata.get('runCmd') as string;
     const res = await handleFormAction({
       githubUrl,
       envFile,
+      installCmd,
+      buildCmd,
+      runCmd,
     });
     setdata(res);
   };
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full m-auto flex justify-center mt-12"
+      className="w-full m-auto flex justify-center mt-12 mb-12"
     >
       <div className="flex flex-col w-full container max-w-3xl justify-center space-y-6">
         <div className="space-y-6 ">
@@ -58,6 +63,41 @@ export default function Form() {
                 setSiteWillBE(generateSlug(e.target.value));
               }
             }}
+          />
+        </div>
+        {/* <div className="space-y-6 ">
+          <Label htmlFor="packageManager">Package manager</Label>
+          <select className='p-3'>
+            <option value="pnpm">pnpm</option>
+            <option value="yarn">yarn</option>
+            <option value="npm">npm</option>
+          </select>
+        </div> */}
+        <div className="space-y-6 ">
+          <Label htmlFor="installCmd">Install command</Label>
+          <Input
+            id="installCmd"
+            placeholder="pnpm install"
+            type="text"
+            name="installCmd"
+          />
+        </div>
+        <div className="space-y-6 ">
+          <Label htmlFor="buildCmd">Build command</Label>
+          <Input
+            id="buildCmd"
+            placeholder="pnpm run build"
+            type="text"
+            name="buildCmd"
+          />
+        </div>
+        <div className="space-y-6 ">
+          <Label htmlFor="runCmd">Run command</Label>
+          <Input
+            id="runCmd"
+            placeholder="pnpm run start"
+            type="text"
+            name="runCmd"
           />
         </div>
         <div className="">
@@ -96,6 +136,18 @@ export default function Form() {
                         target="_blank"
                       >
                         {res?.siteUrl}
+                      </Link>
+                    </AlertDescription>
+                  )}
+                  {res?.logUrl && (
+                    <AlertDescription>
+                      Log URL:{' '}
+                      <Link
+                        className="text-blue-600"
+                        href={`${res?.logUrl}`}
+                        target="_blank"
+                      >
+                        {res?.logUrl}
                       </Link>
                     </AlertDescription>
                   )}

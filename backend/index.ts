@@ -6,13 +6,14 @@ import { URL } from 'url';
 import Redis from 'ioredis';
 import { PassThrough, Duplex } from 'stream';
 import 'dotenv/config';
-
+import cors from 'cors';
 const app = express();
 const docker = new Docker();
 const redisClient = new Redis(process.env.REDIS_URL || '');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 portfinder.basePort = 3001;
 
@@ -60,23 +61,37 @@ const destroyContainer = async (
   }
 };
 app.post('/deploy', async (req: Request, res: Response) => {
-  const { githubUrl, envFile } = req.body;
-  if (!githubUrl || !validator.isURL(githubUrl, { require_protocol: true })) {
-    return res.status(400).send('A valid GitHub URL is required');
+  try {
+    const { githubUrl, envFile, installCmd, buildCmd, runCmd } = req.body;
+    if (!githubUrl || !validator.isURL(githubUrl, { require_protocol: true })) {
+      return res.status(400).send('A valid GitHub URL is required');
+    }
+
+    const slug = generateSlug(githubUrl);
+    deployApplication(
+      githubUrl,
+      envFile || '',
+      slug,
+      installCmd,
+      buildCmd,
+      runCmd
+    )
+      .then(() => {
+        redisClient.append(`Deployment process done for ${slug}\n`);
+        console.log(`Deployment process done for ${slug}`);
+      })
+      .catch((error) =>
+        console.error(`Error during deployment for ${slug}: `, error)
+      );
+
+    res.send({
+      message: 'Deployment started',
+      siteUrl: `https://${slug}-x.hsingh.site`,
+      logUrl: `https://api-deployer.hsingh.site/logs/${slug}`,
+    });
+  } catch (error) {
+    console.error('ERROR:', error);
   }
-
-  const slug = generateSlug(githubUrl);
-  deployApplication(githubUrl, envFile || '', slug)
-    .then(() => console.log(`Deployment process started for ${slug}`))
-    .catch((error) =>
-      console.error(`Error during deployment for ${slug}: `, error)
-    );
-
-  res.send({
-    message: 'Deployment started',
-    siteUrl: `https://${slug}-x.hsingh.site`,
-    logUrl: `https://api-deployer.hsingh.site/logs/${slug}`,
-  });
 });
 
 app.get('/logs/:slug', async (req: Request, res: Response) => {
@@ -104,7 +119,10 @@ app.post('/destroy/:slug', async (req: Request, res: Response) => {
 const deployApplication = async (
   githubUrl: string,
   envFile: string,
-  slug: string
+  slug: string,
+  installCmd: string,
+  buildCmd: string,
+  runCmd: string
 ) => {
   let startLogging = false;
   try {
@@ -142,8 +160,14 @@ const deployApplication = async (
     await redisClient.set(`container:${slug}`, container.id);
     await redisClient.set(`port:${slug}`, availablePort.toString());
 
-    const setupScript = buildSetupScript(githubUrl, envFile, availablePort);
-
+    const setupScript = buildSetupScript(
+      githubUrl,
+      envFile,
+      availablePort,
+      installCmd,
+      buildCmd,
+      runCmd
+    );
     const exec = await container.exec({
       AttachStdout: true,
       AttachStderr: true,
@@ -172,7 +196,10 @@ const handleDockerImage = async (imageName: string, slug: string) => {
 const buildSetupScript = (
   githubUrl: string,
   envFile: string,
-  availablePort: number
+  availablePort: number,
+  installCmd: string,
+  buildCmd: string,
+  runCmd: string
 ): string => `
     export DEBIAN_FRONTEND=noninteractive &&
     apt-get update &&
@@ -185,11 +212,14 @@ const buildSetupScript = (
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
     npm install -g pnpm &&
     npm install -g pm2 &&
+    npm install -g yarn
     npm install -g sharp &&
-    pnpm install &&
+    ${installCmd || 'pnpm install'} &&
     pnpm add sharp &&
-    pnpm run build &&
-    PORT=${availablePort} pm2 start "pnpm run start" --no-daemon -o out.log -e err.log
+    ${buildCmd || 'pnpm run build'} &&
+    PORT=${availablePort} port=${availablePort} pm2 start "${
+  runCmd || 'pnpm run start'
+} --port ${availablePort}" --no-daemon -o out.log -e err.log 
 `;
 
 const executeSetupScript = async (exec: Docker.Exec, slug: string) => {
