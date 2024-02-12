@@ -3,6 +3,9 @@
 export const handleFormAction = async (formdata: {
   githubUrl: string;
   envFile: string;
+  installCmd: string;
+  buildCmd: string;
+  runCmd: string;
 }) => {
   const response = await fetch('https://api-deployer.hsingh.site/deploy', {
     method: 'POST',
@@ -12,6 +15,9 @@ export const handleFormAction = async (formdata: {
     body: JSON.stringify({
       githubUrl: formdata.githubUrl,
       envFile: formdata.envFile,
+      installCmd: formdata.installCmd,
+      buildCmd: formdata.buildCmd,
+      runCmd: formdata.runCmd,
     }),
   });
   try {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { JsonView, allExpanded, defaultStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 
-const Logs = ({ url }: { url: string }) => {
+const Logs = ({ url, interval = 3000 }: { url: string; interval?: number }) => {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
@@ -17,9 +17,13 @@ const Logs = ({ url }: { url: string }) => {
         console.error('Error fetching logs:', error);
       }
     };
-
-    fetchData();
-  }, []);
+    const intervalP = setInterval(() => {
+      fetchData();
+    }, interval);
+    return () => {
+      clearInterval(intervalP);
+    };
+  }, [interval, url]);
   return (
     <div className="bg-[#eeeeee] py-3 px-2 rounded-md">
       <JsonView
