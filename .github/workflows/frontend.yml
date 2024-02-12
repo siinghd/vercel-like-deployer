@@ -4,7 +4,7 @@ env:
   PROJECT_NAME: deployer
   PROJECT_TYPE: frontend
   WORKING_DIRECTORY: frontend
-  CURR_WORKING_DIRECTORY: frontend
+  CURR_WORKING_DIRECTORY: ./vercel-frontend
   DEV_APP_PORT: 3014
   DEV_DOMAIN_NAME: deployerhsingh.site
   PROD_APP_PORT:
