@@ -1,4 +1,4 @@
-# vercel-custom-deployer
+# proxy
 
 To install dependencies:
 
