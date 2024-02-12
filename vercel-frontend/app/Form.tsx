@@ -8,6 +8,11 @@ import { handleFormAction } from '@/actions';
 import { useFormState } from 'react-dom';
 import { useState } from 'react';
 import { Siemreap } from 'next/font/google';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
+import Logs from '@/components/Logs';
+
 const generateSlug = (githubUrl: string): string => {
   try {
     const parsedUrl = new URL(githubUrl);
@@ -17,8 +22,10 @@ const generateSlug = (githubUrl: string): string => {
     return 'provide a valid url';
   }
 };
+
 export default function Form() {
   const [data, setdata] = useState<any>(null);
+
   const [siteWillBE, setSiteWillBE] = useState('');
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,9 +41,12 @@ export default function Form() {
     setdata(res);
   };
   return (
-    <form onSubmit={handleSubmit} className="w-full m-auto flex justify-center">
-      <div className="grid w-full max-w-md gap-6">
-        <div className="grid gap-1.5">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full m-auto flex justify-center mt-12"
+    >
+      <div className="flex flex-col w-full container max-w-3xl justify-center space-y-6">
+        <div className="space-y-6 ">
           <Label htmlFor="github-url">GitHub URL</Label>
           <Input
             id="githubUrl"
@@ -50,7 +60,7 @@ export default function Form() {
             }}
           />
         </div>
-        <div className="grid gap-1.5">
+        <div className="">
           <Label htmlFor="environment-file">Environment File</Label>
           <Textarea
             rows={15}
@@ -67,7 +77,33 @@ export default function Form() {
         )}
 
         <Button type="submit">Submit</Button>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+        {data?.map(
+          (res: any, ind: number) =>
+            res && (
+              <>
+                <Alert
+                  className="border-blue-700 bg-blue-50"
+                  key={ind}
+                  variant="default"
+                >
+                  <AlertTitle>{res?.message}</AlertTitle>
+                  {res?.siteUrl && (
+                    <AlertDescription>
+                      Site URL:{' '}
+                      <Link
+                        className="text-blue-600"
+                        href={`${res?.siteUrl}`}
+                        target="_blank"
+                      >
+                        {res?.siteUrl}
+                      </Link>
+                    </AlertDescription>
+                  )}
+                </Alert>
+                {res?.logUrl && <Logs url={res.logUrl} />}
+              </>
+            )
+        )}
       </div>
     </form>
   );
