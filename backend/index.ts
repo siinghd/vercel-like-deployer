@@ -7,6 +7,7 @@ import Redis from 'ioredis';
 import { PassThrough, Duplex } from 'stream';
 import 'dotenv/config';
 import cors from 'cors';
+
 const app = express();
 const docker = new Docker();
 const redisClient = new Redis(process.env.REDIS_URL || '');
@@ -77,7 +78,10 @@ app.post('/deploy', async (req: Request, res: Response) => {
       runCmd
     )
       .then(() => {
-        redisClient.append(`Deployment process done for ${slug}\n`);
+        redisClient.append(
+          `logs:${slug}`,
+          `Deployment process done for ${slug}\n`
+        );
         console.log(`Deployment process done for ${slug}`);
       })
       .catch((error) =>
