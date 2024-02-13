@@ -6,6 +6,7 @@ export const handleFormAction = async (formdata: {
   installCmd: string;
   buildCmd: string;
   runCmd: string;
+  projectPath: string;
 }) => {
   const response = await fetch('https://api-deployer.hsingh.site/deploy', {
     method: 'POST',
@@ -18,6 +19,7 @@ export const handleFormAction = async (formdata: {
       installCmd: formdata.installCmd,
       buildCmd: formdata.buildCmd,
       runCmd: formdata.runCmd,
+      projectPath: formdata.projectPath,
     }),
   });
   try {
