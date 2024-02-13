@@ -36,12 +36,14 @@ export default function Form() {
     const installCmd = formdata.get('installCmd') as string;
     const buildCmd = formdata.get('buildCmd') as string;
     const runCmd = formdata.get('runCmd') as string;
+    const projectPath = formdata.get('projectPath') as string;
     const res = await handleFormAction({
       githubUrl,
       envFile,
       installCmd,
       buildCmd,
       runCmd,
+      projectPath,
     });
     setdata(res);
   };
@@ -98,6 +100,15 @@ export default function Form() {
             placeholder="pnpm run start"
             type="text"
             name="runCmd"
+          />
+        </div>
+        <div className="space-y-6 ">
+          <Label htmlFor="projectPath">Project Path</Label>
+          <Input
+            id="projectPath"
+            placeholder="./"
+            type="text"
+            name="projectPath"
           />
         </div>
         <div className="">

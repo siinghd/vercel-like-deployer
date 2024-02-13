@@ -70,7 +70,7 @@ const destroyContainer = async (
 };
 app.post('/deploy', async (req: Request, res: Response) => {
   try {
-    const { githubUrl, envFile, installCmd, buildCmd, runCmd } = req.body;
+    const { githubUrl, envFile, installCmd, buildCmd, runCmd, projectPath} = req.body;
     if (!githubUrl || !validator.isURL(githubUrl, { require_protocol: true })) {
       return res.status(400).send('A valid GitHub URL is required');
     }
@@ -82,7 +82,8 @@ app.post('/deploy', async (req: Request, res: Response) => {
       slug,
       installCmd,
       buildCmd,
-      runCmd
+      runCmd,
+      projectPath
     )
       .then(() => {
         redisClient.append(
@@ -133,7 +134,8 @@ const deployApplication = async (
   slug: string,
   installCmd: string,
   buildCmd: string,
-  runCmd: string
+  runCmd: string,
+  projectPath: string
 ) => {
   let startLogging = false;
   try {
@@ -181,7 +183,8 @@ const deployApplication = async (
       availablePort,
       installCmd,
       buildCmd,
-      runCmd
+      runCmd,
+      projectPath
     );
     const exec = await container.exec({
       AttachStdout: true,
@@ -214,7 +217,8 @@ const buildSetupScript = (
   availablePort: number,
   installCmd: string,
   buildCmd: string,
-  runCmd: string
+  runCmd: string,
+  projectPath: string
 ): string => `
     export DEBIAN_FRONTEND=noninteractive &&
     apt-get update &&
@@ -224,6 +228,7 @@ const buildSetupScript = (
     apt-get install -y git nodejs &&
     git clone ${githubUrl} /app &&
     cd /app &&
+    ${projectPath ? `cd ${projectPath} &&` : 'cd ./'} &&
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
     npm install -g pnpm &&
     npm install -g pm2 &&
