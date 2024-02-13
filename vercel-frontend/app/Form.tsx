@@ -30,7 +30,6 @@ export default function Form() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formdata = new FormData(e.currentTarget);
-;
     const githubUrl = formdata.get('githubUrl') as string;
     const envFile = formdata.get('envFile') as string;
     const installCmd = formdata.get('installCmd') as string;
@@ -124,7 +123,13 @@ export default function Form() {
           <p>Provide a valid url</p>
         )}
         {siteWillBE && !siteWillBE.includes('provide a valid url') && (
-          <p>Your url will be: {`https://${siteWillBE}-x.hsingh.site`}</p>
+          <>
+            <p>Your url will be: {`https://${siteWillBE}-x.hsingh.site`}</p>
+            <p>
+              Your logs will be:
+              {`https://api-deployer.hsingh.site/logs/${siteWillBE}`}
+            </p>
+          </>
         )}
 
         <Button type="submit">Submit</Button>
@@ -166,6 +171,12 @@ export default function Form() {
                 {res?.logUrl && <Logs url={res.logUrl} />}
               </>
             )
+        )}
+        {!data && siteWillBE && !siteWillBE.includes('provide a valid url') && (
+          <>
+            <p>Your previous logs (if any):</p>
+            <Logs url={`https://api-deployer.hsingh.site/logs/${siteWillBE}`} />
+          </>
         )}
       </div>
     </form>

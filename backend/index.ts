@@ -70,12 +70,14 @@ const destroyContainer = async (
 };
 app.post('/deploy', async (req: Request, res: Response) => {
   try {
-    const { githubUrl, envFile, installCmd, buildCmd, runCmd, projectPath} = req.body;
+    const { githubUrl, envFile, installCmd, buildCmd, runCmd, projectPath } =
+      req.body;
     if (!githubUrl || !validator.isURL(githubUrl, { require_protocol: true })) {
       return res.status(400).send('A valid GitHub URL is required');
     }
 
     const slug = generateSlug(githubUrl);
+    
     deployApplication(
       githubUrl,
       envFile || '',
@@ -160,6 +162,7 @@ const deployApplication = async (
         redisClient.append(`logs:${slug}`, `Error: ${error}\n`);
       }
     }
+    await redisClient.del(`logs:${slug}`);
 
     const availablePort = await portfinder.getPortPromise();
     await handleDockerImage('ubuntu:focal', slug);
@@ -228,7 +231,7 @@ const buildSetupScript = (
     apt-get install -y git nodejs &&
     git clone ${githubUrl} /app &&
     cd /app &&
-    ${projectPath ? `cd ${projectPath} &&` : 'cd ./'} &&
+    ${projectPath ? `cd ${projectPath}` : 'cd ./'} &&
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
     npm install -g pnpm &&
     npm install -g pm2 &&
