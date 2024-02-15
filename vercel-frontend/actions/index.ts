@@ -8,7 +8,7 @@ export const handleFormAction = async (formdata: {
   runCmd: string;
   projectPath: string;
 }) => {
-  const response = await fetch('https://api-deployer.hsingh.site/deploy', {
+  const response = await fetch('http://localhost:3001/deploy', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
