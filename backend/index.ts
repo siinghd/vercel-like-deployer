@@ -18,10 +18,17 @@ app.use(cors());
 
 portfinder.basePort = 3001;
 
-const generateSlug = (githubUrl: string): string => {
+const generateSlug = (githubUrl: string, projectPath: string): string => {
   const parsedUrl = new URL(githubUrl);
   const pathname = parsedUrl.pathname;
-  return pathname.split('/').slice(1, 3).join('-').toLowerCase();
+  const slugBase = projectPath
+    ? `${projectPath}-${pathname.split('/').slice(1, 3).join('-')}`
+    : pathname.split('/').slice(1, 3).join('-');
+
+  // Remove characters that are not letters or numbers
+  const cleanSlug = slugBase.replace(/[^a-zA-Z0-9-]/g, '');
+
+  return cleanSlug.toLowerCase();
 };
 
 const parseEnvFile = (envFile: string): string[] =>
@@ -76,8 +83,8 @@ app.post('/deploy', async (req: Request, res: Response) => {
       return res.status(400).send('A valid GitHub URL is required');
     }
 
-    const slug = generateSlug(githubUrl);
-    
+    const slug = generateSlug(githubUrl, projectPath);
+
     deployApplication(
       githubUrl,
       envFile || '',
@@ -179,7 +186,6 @@ const deployApplication = async (
     await container.start();
     await redisClient.set(`container:${slug}`, container.id);
     await redisClient.set(`port:${slug}`, availablePort.toString());
-
     const setupScript = buildSetupScript(
       githubUrl,
       envFile,
@@ -189,6 +195,7 @@ const deployApplication = async (
       runCmd,
       projectPath
     );
+
     const exec = await container.exec({
       AttachStdout: true,
       AttachStderr: true,
@@ -205,6 +212,7 @@ const handleDockerImage = async (imageName: string, slug: string) => {
   try {
     await docker.getImage(imageName).inspect();
   } catch (error: any) {
+    console.error('Error inspecting image:', error);
     if (error.statusCode === 404) {
       await docker.pull(imageName);
       redisClient.append(`logs:${slug}`, `Pulled ${imageName} image.\n`);
@@ -228,21 +236,32 @@ const buildSetupScript = (
     apt-get install -y curl &&
     curl -sL https://deb.nodesource.com/setup_20.x | bash - &&
     apt-get upgrade -y &&
-    apt-get install -y git nodejs &&
+    apt-get install -y git nodejs jq &&
     git clone ${githubUrl} /app &&
     cd /app &&
     ${projectPath ? `cd ${projectPath}` : 'cd ./'} &&
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
     npm install -g pnpm &&
     npm install -g pm2 &&
-    npm install -g yarn
+    npm install -g yarn &&
     npm install -g sharp &&
+    npm install -g serve &&
     ${installCmd || 'pnpm install'} &&
     pnpm add sharp &&
-    ${buildCmd || 'pnpm run build'} &&
-    PORT=${availablePort} port=${availablePort} pm2 start "${
+    if jq -e '.scripts.build' package.json >/dev/null; then
+        ${buildCmd || 'pnpm run build'}
+    fi &&
+    if [ -d dist ] && [ -f dist/index.html ]; then
+        pm2 serve dist --port=${availablePort} --spa --no-daemon
+    elif [ -d out ] && [ -f out/index.html ]; then
+        pm2 serve out --port=${availablePort} --spa --no-daemon
+    elif [ -d build ]&& [ -f build/index.html ]; then
+        pm2 serve build --port=${availablePort} --spa --no-daemon
+    else
+        PORT=${availablePort} port=${availablePort} pm2 start "${
   runCmd || 'pnpm run start'
 } --port ${availablePort}" --no-daemon -o out.log -e err.log 
+    fi
 `;
 
 const executeSetupScript = async (exec: Docker.Exec, slug: string) => {
