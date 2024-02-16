@@ -99,11 +99,13 @@ app.post('/deploy', async (req: Request, res: Response) => {
           `logs:${slug}`,
           `Deployment process done for ${slug}\n`
         );
-        console.log(`Deployment process done for ${slug}`);
       })
-      .catch((error) =>
-        console.error(`Error during deployment for ${slug}: `, error)
-      );
+      .catch((error) => {
+        redisClient.append(
+          `logs:${slug}`,
+          `Error during deployment for ${slug}:  ${error}\n`
+        );
+      });
 
     res.send({
       message: 'Deployment started',
@@ -195,7 +197,6 @@ const deployApplication = async (
       runCmd,
       projectPath
     );
-
     const exec = await container.exec({
       AttachStdout: true,
       AttachStderr: true,
@@ -204,6 +205,7 @@ const deployApplication = async (
     redisClient.append(`logs:${slug}`, `Deployment started.\n`);
     await executeSetupScript(exec, slug);
   } catch (error) {
+    console.error('Error during deployment:', error);
     await redisClient.append(`logs:${slug}`, `Error: ${error}\n`);
   }
 };
@@ -233,7 +235,8 @@ const buildSetupScript = (
 ): string => `
     export DEBIAN_FRONTEND=noninteractive &&
     apt-get update &&
-    apt-get install -y curl &&
+    apt-get install -y curl unzip &&
+    curl -fSL https://bun.sh/install | bash &&
     curl -sL https://deb.nodesource.com/setup_20.x | bash - &&
     apt-get upgrade -y &&
     apt-get install -y git nodejs jq &&
