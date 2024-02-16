@@ -13,11 +13,18 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import Logs from '@/components/Logs';
 
-const generateSlug = (githubUrl: string): string => {
+const generateSlug = (githubUrl: string, projectPath: string): string => {
   try {
     const parsedUrl = new URL(githubUrl);
     const pathname = parsedUrl.pathname;
-    return pathname.split('/').slice(1, 3).join('-').toLowerCase();
+    const slugBase = projectPath
+      ? `${projectPath}-${pathname.split('/').slice(1, 3).join('-')}`
+      : pathname.split('/').slice(1, 3).join('-');
+
+    // Remove characters that are not letters or numbers
+    const cleanSlug = slugBase.replace(/[^a-zA-Z0-9-]/g, '');
+
+    return cleanSlug.toLowerCase();
   } catch (error) {
     return 'provide a valid url';
   }
@@ -25,7 +32,7 @@ const generateSlug = (githubUrl: string): string => {
 
 export default function Form() {
   const [data, setdata] = useState<any>(null);
-
+  const [projectPath, setProjectPath] = useState('');
   const [siteWillBE, setSiteWillBE] = useState('');
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,7 +68,7 @@ export default function Form() {
             name="githubUrl"
             onChange={(e) => {
               if (e.target.value) {
-                setSiteWillBE(generateSlug(e.target.value));
+                setSiteWillBE(generateSlug(e.target.value, projectPath));
               }
             }}
           />
@@ -107,7 +114,11 @@ export default function Form() {
             id="projectPath"
             placeholder="./"
             type="text"
+            value={projectPath}
             name="projectPath"
+            onChange={(e) => {
+              setProjectPath(e.target.value);
+            }}
           />
         </div>
         <div className="">
