@@ -96,6 +96,7 @@ export default function Form() {
             placeholder="pnpm install"
             type="text"
             name="installCmd"
+            defaultValue={'pnpm install'}
           />
         </div>
         <div className="space-y-6 ">
@@ -105,6 +106,7 @@ export default function Form() {
             placeholder="pnpm run build"
             type="text"
             name="buildCmd"
+            defaultValue={'pnpm run build'}
           />
         </div>
         <div className="space-y-6 ">
@@ -114,6 +116,7 @@ export default function Form() {
             placeholder="pnpm run start"
             type="text"
             name="runCmd"
+            defaultValue={'pnpm run start'}
           />
         </div>
         <div className="space-y-6 ">
