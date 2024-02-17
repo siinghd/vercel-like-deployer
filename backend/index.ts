@@ -236,7 +236,6 @@ const buildSetupScript = (
     export DEBIAN_FRONTEND=noninteractive &&
     apt-get update &&
     apt-get install -y curl unzip &&
-    curl -fSL https://bun.sh/install | bash &&
     curl -sL https://deb.nodesource.com/setup_20.x | bash - &&
     apt-get upgrade -y &&
     apt-get install -y git nodejs jq &&
@@ -249,6 +248,7 @@ const buildSetupScript = (
     npm install -g yarn &&
     npm install -g sharp &&
     npm install -g serve &&
+    npm install -g bun &&
     ${installCmd || 'pnpm install'} &&
     pnpm add sharp &&
     if jq -e '.scripts.build' package.json >/dev/null; then
