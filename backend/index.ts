@@ -247,8 +247,10 @@ const buildSetupScript = (
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
     npm install -g pnpm pm2 yarn sharp serve &&
     ${installCmd || 'pnpm install'} &&
-    if jq -e '.scripts.build' package.json >/dev/null; then
-        ${buildCmd || 'pnpm run build'}
+    if [ -n "${buildCmd}" ]; then
+    ${buildCmd}
+    elif jq -e '.scripts.build' package.json >/dev/null; then
+        pnpm run build
     fi &&
     if [ -d dist ] && [ -f dist/index.html ]; then
         pm2 serve dist --port=${availablePort} --spa --no-daemon
