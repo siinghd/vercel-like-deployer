@@ -235,22 +235,18 @@ const buildSetupScript = (
 ): string => `
     export DEBIAN_FRONTEND=noninteractive &&
     apt-get update &&
-    apt-get install -y curl unzip &&
-    curl -sL https://deb.nodesource.com/setup_20.x | bash - &&
     apt-get upgrade -y &&
+    apt-get install -y curl unzip &&
+    curl -fsSL https://bun.sh/install | bash && 
+    ln -s $HOME/.bun/bin/bun /usr/local/bin/bun &&
+    curl -sL https://deb.nodesource.com/setup_20.x | bash - &&
     apt-get install -y git nodejs jq &&
     git clone ${githubUrl} /app &&
     cd /app &&
     ${projectPath ? `cd ${projectPath}` : 'cd ./'} &&
     echo -e "${envFile.split('\n').join('\\n')}" > .env &&
-    npm install -g pnpm &&
-    npm install -g pm2 &&
-    npm install -g yarn &&
-    npm install -g sharp &&
-    npm install -g serve &&
-    npm install -g bun &&
+    npm install -g pnpm pm2 yarn sharp serve &&
     ${installCmd || 'pnpm install'} &&
-    pnpm add sharp &&
     if jq -e '.scripts.build' package.json >/dev/null; then
         ${buildCmd || 'pnpm run build'}
     fi &&
