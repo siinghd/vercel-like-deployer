@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { handleFormAction } from '@/actions';
 import { useFormState } from 'react-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Siemreap } from 'next/font/google';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -33,6 +33,8 @@ const generateSlug = (githubUrl: string, projectPath: string): string => {
 export default function Form() {
   const [data, setdata] = useState<any>(null);
   const [projectPath, setProjectPath] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+
   const [siteWillBE, setSiteWillBE] = useState('');
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,6 +55,13 @@ export default function Form() {
     });
     setdata(res);
   };
+
+  useEffect(() => {
+    if (githubUrl || projectPath) {
+      setSiteWillBE(generateSlug(githubUrl, projectPath));
+    }
+  }, [githubUrl, projectPath]);
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -66,10 +75,9 @@ export default function Form() {
             placeholder="Enter your GitHub URL"
             type="text"
             name="githubUrl"
+            value={githubUrl}
             onChange={(e) => {
-              if (e.target.value) {
-                setSiteWillBE(generateSlug(e.target.value, projectPath));
-              }
+              setGithubUrl(e.target.value);
             }}
           />
         </div>
@@ -88,6 +96,7 @@ export default function Form() {
             placeholder="pnpm install"
             type="text"
             name="installCmd"
+            defaultValue={'pnpm install'}
           />
         </div>
         <div className="space-y-6 ">
@@ -97,6 +106,7 @@ export default function Form() {
             placeholder="pnpm run build"
             type="text"
             name="buildCmd"
+            defaultValue={'pnpm run build'}
           />
         </div>
         <div className="space-y-6 ">
@@ -106,6 +116,7 @@ export default function Form() {
             placeholder="pnpm run start"
             type="text"
             name="runCmd"
+            defaultValue={'pnpm run start'}
           />
         </div>
         <div className="space-y-6 ">
